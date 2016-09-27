@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>アンケート</title>
+<meta name="viewport" content="width=device-width, initial-scable=1.0">
+<link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css">
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<!--
+<link rel="stylesheet" href="../jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.css" />
+<script src="../jquery-1.12.3/jquery-1.11.1.min.js"></script>
+<script src="../jquery.mobile-1.4.5/jquery.mobile-1.4.5.min.js"></script>
+<script type="text/javascript" src="../jquery.cookie/jquery.cookie.js"></script>
+-->
+<script type="text/javascript" src="view/js/common.js"></script>
+<meta content="MSHTML 6.00.2900.3429" name=GENERATOR>
+</head>
+<body topMargin=50 onload="init();" marginheight="50" background="data/body_bg.gif" style=" margin: 0 auto; max-width: 750px">
+    <div id="messageArea"></div>
+    <div id="header" data-role="header" data-position="fixed">
+        <h6>アンケート</h6>
+        <!--<div class="ui-btn-right">
+        <!--<label for="lang">言語</label>-->
+        <!--<select name="lang" id="lang" data-native-menu="false" onchange="setQuestions();">
+            <option value="1" selected>日本語</option>
+            <option value="2">英語</option>
+            <option value="3">中国語（簡体）</option>
+            <option value="4">中国語（繁体）</option>
+            <option value="5">韓国語</option>
+        </select>
+        </div>-->
+    </div>
+    <div data-role="content">
+        <form action="index.php?p=Entry" id="regform" method="post" autocomplete="off">
+            <div id ="main">
+                <input type="text" name="mail_address" id="mail_address" name="mail_address" value="" placeholder="メールアドレス">
+                <div id="qArea"></div>  <!-- /Question Area -->
+                <div style="margin: 2%;font-size:10pt">
+■メールアドレス宛に採点結果を送信します。<br>
+                </div>
+                <div>
+                    <INPUT onclick="check();" type="button" name="Submit" id="Submit" value="回答送信" >
+                    <INPUT type="hidden" id="answer_json">
+                    <!--<INPUT onclick="test();" type="button" value="テスト" >-->
+                </div>
+            </div>  <!-- /main -->
+        </form>
+    </div>  <!-- /content -->
+    <div id="footer" data-role="footer">
+        Copyright 2016
+    </div>
+<script>
+
+    var API_BASE_URL = "api/";
+    // 初期処理
+    function init() {
+        setQuestions();
+    }
+
+    function test() {
+        //alert($('#answer_1_1').val());
+        //alert($('#answer_1_2').val());
+        alert($('#answerId_1_3_1').prop('checked'));
+        alert($('#answerId_1_3_2').is(':checked'));
+    }
+    // submit処理
+    // 入力チェック
+    function check() {
+//        if($('input[name=auth_kind]:checked').val() == undefined){
+//            alert("認証方式を選択してください。");
+//            //return e.preventDefault();
+//            return 9;
+//        }
+//        if($('input[name=auth_kind]:checked').val() == '1' && $('#mail_address').val().replace(/^\s+/, "") == ""){
+//            alert("メールアドレスは必須です。");
+//            //return e.preventDefault();
+//            return 9;
+//        }
+//        //二度押し防止
+//        $("#Submit").prop("disabled", true);
+        var rtnJson = '[';
+        var tmpJson = '';
+        var answerType = 0;
+        var value = '';
+        for (var i = 0; i < $('#Q_HEAD_COUNT').val(); i++){
+            var headNo = i + 1;
+//console.log('#Q_DETAIL_COUNT_' + headNo + ' = '  + $('#Q_DETAIL_COUNT_' + headNo).val());
+            for (var qNo = 1; qNo <= $('#Q_DETAIL_COUNT_' + headNo).val(); qNo++){
+//console.log('#ANSWER_TYPE_' + headNo + '_' + qNo + ' = '  + $('#ANSWER_TYPE_' + headNo + '_' + qNo).val());
+                answerType = $('#ANSWER_TYPE_' + headNo + '_' + qNo).val();
+                if ( answerType == '0' ) {
+                    //console.log('#ANSWER_' + headNo + '_'  + qNo + ' = '  + $('#ANSWER_' + headNo + '_' + qNo).val());
+                    tmpJson = '{"headNo":"' + headNo + '","questionNo":"' + qNo + '","answer":"' + $('#ANSWER_' + headNo + '_' + qNo).val() + '"}';
+                    value = $('#ANSWER_' + headNo + '_' + qNo).val();
+                }else{
+                    for (var no = 1; no <= $('#ANSWER_KIND_COUNT_' + headNo + '_'  + qNo).val(); no++){
+                        if( $('#ANSWER_ID_' + headNo + '_' + qNo + '_'  + no).prop('checked') ) {
+                            //console.log('#ANSWER_ID_' + headNo + '_'  + qNo + '_'  + no + ' = '  + no);
+                            tmpJson = '{"headNo":"' + headNo + '","questionNo":"' + qNo + '","answer":"' + no + '"}';
+                            value = no;
+                        }
+                        //console.log('#ANSWER_ID_' + headNo + '_'  + qNo + '_'  + no + ' = '  + $('#ANSWER_ID_' + headNo + '_' + qNo + '_'  + no).prop('checked'));
+                    }
+                }
+                var requiredFlg = $('#REQUIRED_' + headNo + '_' + qNo).val();
+                //console.log("requiredFlg:"+requiredFlg);
+                if(requiredFlg && value == ''){
+                    if (answerType == 0 ) {
+                        alert("必須項目の回答が入力されていません。");
+                    }else{
+                        alert("必須項目の回答が選択されていません。");
+                    }
+                    return 9;
+                }
+                if (headNo == 1 && qNo == 1) {
+                    rtnJson += tmpJson;
+                } else {
+                    rtnJson += ',' + tmpJson;
+                }
+            }
+        }
+        rtnJson += ']';
+        //$(':hidden[name="answer_json"]').val(rtnJson);
+        console.log(rtnJson);
+        //console.log(JSON.stringify(rtnJson));
+        $.ajax({
+            url: "?p=Questions&f=entry",
+            type : 'json',
+            dataType: "text",
+            data : rtnJson,
+            cache: false,
+        }).done(function(data, textStatus){
+            if(data == '1'){
+                alert("回答を登録しました");
+                location.href = document.location.href;
+            }else{
+                alert("回答の登録に失敗しました\n" + data);
+            }
+            //window.location.reload();
+        }).fail(function(xhr, textStatus, errorThrown){
+            alert("回答の登録に失敗しました");
+            console.log('Error! ' + textStatus + ' ' + errorThrown + ' ' + xhr.responseText);
+        });
+
+    }
+
+    //認証方式のラジオボタン変更時
+    $( 'input[name="auth_kind"]:radio' ).change( function() {
+        if($( this ).val() == '1'){
+            $('#auth_kind_id').val(1);
+            $('#mail_address').show();
+        }else if($( this ).val() == '2'){
+            $('#mail_address').hide();
+            $('#auth_kind_id').val(2);
+        }else if($( this ).val() == '3'){
+            $('#mail_address').hide();
+            $('#auth_kind_id').val(3);
+        }
+    });
+
+    // アンケート情報セット
+    function setQuestions() {
+        //languageId = $('#lang').val();
+        //※言語はとりあえず1（日本語）に固定にしている
+        languageId = 1;
+        $.ajax({
+            url: API_BASE_URL + "QuestionsApi.php",
+            dataType: "json",
+            cache: false,
+        }).done(function(data, textStatus){
+            if( data !== null && data !== undefined ) {
+                //createQuestions(data);
+                //alert(JSON.parse(decodeURI(data)));
+                //createQuestions(JSON.parse(decodeURI(data)));
+                //createQuestions(encodeURIComponent(data));
+                createQuestions(data);
+            }
+        }).fail(function(xhr, textStatus, errorThrown){
+            alert('getQuestions Error! ' + textStatus + ' ' + errorThrown);
+        });
+        $(':hidden[name="question_flg"]').val(1);
+
+    }
+
+    // JSONデータ（リスト）をパースしてアンケートHTMLを生成
+    function createQuestions(data) {
+        //console.log(JSON.stringify(data))
+        var count = 0;
+        var questionTitle = "";
+        var headNo = 0;
+        var qDetailCount = 0;
+        console.log("data.QUESTIONS.length=" + data.QUESTIONS.length);
+        $(data.QUESTIONS).each( function() {
+            //console.log("data.QUESTIONS[count].Q_TEXT=" + data.QUESTIONS[count].Q_TEXT);
+            var qNo = data.QUESTIONS[count].Q_NO;
+            if(data.QUESTIONS[count].Q_TITLE != questionTitle){
+                if ( questionTitle != '' ) {
+                    $('#qArea').append('<input type="hidden" id="Q_DETAIL_COUNT_' + headNo + '" value=' + qDetailCount + '>\n').trigger( "create" );
+                }
+                headNo++;
+                qDetailCount = 0;
+                $('#qArea').append($('<h3>【' + data.QUESTIONS[count].Q_TITLE + '】</h3>\n'))
+                    .append($('<input type="hidden" name="Q_ID_' + headNo + '" id="Q_ID_' + headNo + '" value=' + data.QUESTIONS[count].Q_ID + '>\n'));
+            }
+        //※アンケート文生成について
+        //answerKindId=0の場合はTEXTとする
+        //answerKindId>=1の場合は、ラジオボタンとする。
+            if(data.QUESTIONS[count].REQUIRED_FLG == 1){
+                qText = data.QUESTIONS[count].Q_TEXT + " ※";
+                var requiredHtml = '<input type="hidden" id="REQUIRED_' + headNo + '_' + qNo + '" value="true">\n';
+            }else{
+                qText = data.QUESTIONS[count].Q_TEXT;
+                var requiredHtml = '<input type="hidden" id="REQUIRED_' + headNo + '_' + qNo + '" value="false">\n';
+            }
+            $('#qArea').append($(requiredHtml)).trigger( "create" );
+            if(data.QUESTIONS[count].ANSWER_KIND_ID == 0){
+                $('#qArea').append($('<fieldset data-role="controlgroup" data-type="horizontal">\n<legend>' + 'Q.' + qNo + ' ： ' + qText + '</legend><input type="text" name="ANSWER_' + headNo + '_' + qNo + '" id="ANSWER_' + headNo + '_' + qNo + '" value="">\n'))
+                .trigger( "create" );
+                $('#qArea').append('<input type="hidden" id="ANSWER_TYPE_' + headNo + '_' + qNo + '" value="0">\n').trigger( "create" );
+            }else if(data.QUESTIONS[count].ANSWER_KIND_ID > 0){
+                var radioHtml = '<fieldset data-role="controlgroup" data-type="horizontal">\n<legend>' + 'Q.' + qNo + ' ： ' + qText + '</legend>\n';
+                var i = 0;
+                var no = 1;
+                $(data.ANSWER_KINDS).each( function() {
+                    //console.log(data.ANSWER_KINDS[i].ANSWER_KIND_ID + '/' + data.ANSWER_KINDS[count].ANSWER_KIND_ID);
+                    if(data.ANSWER_KINDS[i].ANSWER_KIND_ID == data.QUESTIONS[count].ANSWER_KIND_ID){
+                        radioHtml += '<input type="radio" name="ANSWER_ID_' + headNo + '_' + qNo + '" value="' + no + '" id="ANSWER_ID_' + headNo + '_' + qNo + '_' + no + '">\n';
+                        radioHtml += '<label for="ANSWER_ID_' + headNo + '_' + qNo + '_' + no + '">' + data.ANSWER_KINDS[i].ANSWER_NAME + '</label>\n';
+                        no++;
+                    }
+                    i++;
+                });
+                var answerKindCount = no - 1;
+                //console.log(radioHtml);
+                $('#qArea').append($(radioHtml)).trigger( "create" );
+                $('#qArea').append('<input type="hidden" id="ANSWER_TYPE_' + headNo + '_' + qNo + '" value="1">\n').trigger( "create" );
+                $('#qArea').append('<input type="hidden" id="ANSWER_KIND_COUNT_' + headNo + '_' + qNo + '" value=' + answerKindCount + '>\n').trigger( "create" );
+            }
+            qDetailCount++;
+            questionTitle = data.QUESTIONS[count].Q_TITLE;
+            count++;
+        });
+        $('#qArea').append('<input type="hidden" id="Q_DETAIL_COUNT_' + headNo + '" value=' + qDetailCount + '>\n').trigger( "create" );
+        if(data.QUESTIONS.length > 0){
+            $('#qArea').append($('<hr>'));
+            $('#qArea').append('<input type="hidden" id="Q_HEAD_COUNT" value=' + headNo + '>\n').trigger( "create" );
+        }
+    }
+
+    // アンケート回答種別を取得
+    function getAnswerKinds() {
+       //※言語はとりあえず1（日本語）に固定にしている
+        languageId = 1;
+        $.ajax({
+            url: API_BASE_URL + "answerkinds/" + languageId,
+            dataType: "json",
+            cache: false,
+        }).done(function(data, textStatus){
+          alert("アンケート回答種別=" + JSON.stringify(data));
+        }).fail(function(xhr, textStatus, errorThrown){
+            alert('getAnswerKinds Error! ' + textStatus + ' ' + errorThrown);
+       });
+    }
+
+var unescapeUnicode = function(str) {
+  return str.replace(/\\u([a-fA-F0-9]{4})/g, function(m0, m1) {
+    return String.fromCharCode(parseInt(m1, 16));
+  });
+};
+</script>    
+</body>
+</html>
